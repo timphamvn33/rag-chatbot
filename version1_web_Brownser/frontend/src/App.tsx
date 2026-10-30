@@ -1,7 +1,7 @@
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import {
   Bot, MessageSquare, FileText, Settings, Info, Paperclip, Send,
-  Plus, LoaderCircle, Sparkles,
+  Plus, LoaderCircle, Sparkles, Trash,
   AlertCircle, RefreshCw
 } from "lucide-react";
 
@@ -131,13 +131,27 @@ export default function App() {
         <div className="section-label">YOUR KNOWLEDGE BASE <span>{documents.length}</span></div>
         <div className="document-list">
           {documents.map(doc => (
-            <div className="document-item" key={doc.id}>
-              <div className="pdf-icon"><FileText size={20} /></div>
-              <div className="document-info">
-                <div className="document-name" title={doc.name}>{doc.name}</div>
-                <div className="document-meta"><span className="status-dot" /> {doc.status} · {doc.chunks} chunks</div>
-              </div>
+        <div className="document-item" key={doc.id}>
+          <div className="pdf-icon">
+            <FileText size={20} />
+          </div>
+
+          <div className="document-info">
+            <div className="document-name" title={doc.name}>
+              {doc.name}
             </div>
+
+            <div className="document-meta">
+              <span className="status-dot" />
+              {doc.status} · {doc.chunks} chunks
+            </div>
+          </div>
+
+          <button className="delete-document" title="Delete document">
+            <Trash size={15} />
+          </button>
+        </div>
+            
           ))}
           {!documents.length && <div className="empty-docs">Your uploaded PDFs will appear here.</div>}
         </div>
@@ -184,12 +198,25 @@ export default function App() {
             </div>
             <div className="document-grid">
               {documents.map(doc => (
-                <article className="document-card" key={doc.id}>
-                  <div className="pdf-large"><FileText size={25} /></div>
-                  <div className="document-name">{doc.name}</div>
-                  <div className="document-meta"><span className="status-dot" /> Indexed · {doc.chunks} chunks</div>
-                  <div className="document-size">{(doc.size / 1024).toFixed(0)} KB</div>
-                </article>
+            <article className="document-card" key={doc.id}>
+              <div className="pdf-large">
+                <FileText size={25} />
+              </div>
+
+              <button className="delete-document" title="Delete document">
+                <Trash size={15} />
+              </button>
+
+              <div className="document-name">{doc.name}</div>
+
+              <div className="document-meta">
+                <span className="status-dot" /> Indexed · {doc.chunks} chunks
+              </div>
+
+              <div className="document-size">
+                {(doc.size / 1024).toFixed(0)} KB
+              </div>
+            </article>
               ))}
               {!documents.length && <div className="empty-state"><FileText size={30} /><h3>No documents yet</h3><p>Upload a PDF to start building your knowledge base.</p><button className="primary-button" onClick={() => fileRef.current?.click()}>Choose PDF</button></div>}
             </div>

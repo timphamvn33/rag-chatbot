@@ -112,6 +112,44 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .info-card p { color: #52637c; font-size: 12px; line-height: 1.7; margin: 9px 0; }
 .info-card .muted { color: #8794a8; margin-top: 18px; }
 .spin { animation: spin 1s linear infinite; }
+.document-card {
+  position: relative;
+}
+.delete-document {
+  display: flex;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.delete-document:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.document-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.document-info {
+  flex: 1;
+  min-width: 0;
+}
+
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (max-width: 760px) {
   .sidebar { width: 74px; flex-basis: 74px; padding: 18px 9px; align-items: center; }
