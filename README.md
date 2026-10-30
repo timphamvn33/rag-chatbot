@@ -1,105 +1,89 @@
-# Local PDF RAG Chatbot
+# Local RAG Assistant
 
-A command-line tool that indexes PDF documents and answers questions about them using locally stored vectors and a local Ollama language model. Answers are generated from retrieved passages and include source filenames and page numbers.
+A local-first document assistant that lets you upload PDFs, ask questions about their contents, and review the sources behind each answer. The main version is a React web app backed by a FastAPI service, ChromaDB, local embeddings, and Ollama.
 
-## Technology stack
+## Demo
 
-- **Language:** Python
-- **PDF text extraction:** PyMuPDF
-- **Embeddings:** `sentence-transformers/all-MiniLM-L6-v2` via Sentence Transformers
-- **Vector database:** ChromaDB, persisted locally in `chroma_db/`
-- **Language model:** `llama3.2:3b` served locally by Ollama
+![Local RAG Assistant answering questions about an uploaded PDF](version1_web_Brownser/demo.png)
 
-## Architecture
+## Features
 
-This project uses a retrieval-augmented generation (RAG) architecture with two stages:
+- Upload and index one or more PDF files in the browser.
+- Ask questions grounded in the uploaded documents.
+- View source filenames, page numbers, and excerpts alongside answers.
+- Keep uploaded PDFs, the vector database, and model inference on your machine.
+- Use the included Tkinter/command-line prototype in `version2_GUI/` as an alternative implementation.
 
-1. **Indexing (`ingest.py`)** — PyMuPDF extracts text page by page from PDFs in `documents/`. Each page is split into chunks of up to 1,000 characters with 150 characters of overlap. Sentence Transformers creates normalized embeddings for the chunks, which are stored in the `policy_documents` ChromaDB collection along with source filename and page metadata. ChromaDB uses cosine distance and saves its data locally.
-2. **Question answering (`query.py`)** — The question is embedded using the same embedding model. ChromaDB retrieves up to 10 relevant chunks by cosine similarity. The retrieved text and citation metadata are passed to Ollama with the question; the local Llama model generates an answer grounded in that context.
+Only PDFs with extractable text are supported; scanned documents need OCR before uploading. The web app accepts PDF files up to 40 MB each.
 
-```text
-PDF files
-   | PyMuPDF: extract text and split into overlapping chunks
-   v
-Sentence Transformers: create embeddings
-   |
-   v
-ChromaDB (local persistent vector database)
-   ^
-   | retrieve up to 10 relevant chunks
-Question -> Sentence Transformers -> Ollama / llama3.2:3b -> Answer with citations
-```
+## Technology
+
+- **Frontend:** React, TypeScript, Vite
+- **Backend:** Python, FastAPI, Uvicorn, PyMuPDF
+- **Embeddings:** `sentence-transformers/all-MiniLM-L6-v2`
+- **Vector store:** ChromaDB, persisted locally
+- **Chat model:** `llama3.2:3b` through Ollama
 
 ## Requirements
 
-- Python 3.9 or newer
-- [Ollama](https://ollama.com/) installed and running
-- The `llama3.2:3b` model downloaded in Ollama
+- Python 3.10 or newer
+- Node.js and npm
+- [Ollama](https://ollama.com/) installed
 
-## Setup
-
-From the project directory, create and activate a virtual environment in PowerShell:
-
-```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-Install the Python dependencies:
-
-```powershell
-python -m pip install -r requirements.txt
-```
-
-Download the language model used by the chatbot:
+Download the chat model before starting the app:
 
 ```powershell
 ollama pull llama3.2:3b
 ```
 
-The embedding model (`sentence-transformers/all-MiniLM-L6-v2`) is downloaded automatically the first time you run either script.
+Ollama must be running while you chat. On installations where Ollama does not start automatically, start it with `ollama serve`. The embedding model is downloaded automatically the first time a PDF is indexed.
 
-## Add documents and build the index
+## Run the web app
 
-Put PDF files in the `documents` directory, then run:
-
-```powershell
-python ingest.py
-```
-
-The script extracts text from each PDF, splits it into overlapping chunks, creates embeddings, and saves them in the local `chroma_db` directory. Running ingestion again updates existing chunks with matching IDs.
-
-Only PDFs with extractable text are indexed; scanned PDFs that require OCR are not supported by the current implementation.
-
-## Desktop app (GUI)
-
-Launch the desktop chat window:
+Start the backend in a PowerShell terminal:
 
 ```powershell
-python gui.py
+cd .\version1_web_Brownser\backend
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
 
-Click **Open PDF...** to choose a file. It is copied into `documents/`, indexed, and then you can ask questions in the chat box. Answers are restricted to the currently selected PDF. The first launch takes longer while the embedding model loads. Ollama must be running.
-
-## Ask questions (command line)
-
-Start the interactive question-and-answer prompt:
+In a second terminal, install and start the frontend:
 
 ```powershell
-python query.py
+cd .\version1_web_Brownser\frontend
+npm install
+npm run dev
 ```
 
-Enter a question at the `You:` prompt. Type `exit` or `quit` to end the session. The chatbot retrieves up to 10 relevant chunks and asks Ollama to answer using those passages. If the retrieved context does not contain the answer, it is instructed to say so.
+Open the local address printed by Vite (by default, `http://127.0.0.1:5173`). Keep both the backend and frontend terminals running.
 
-Run `ingest.py` again after adding or changing PDFs so the index reflects those documents.
+## How it works
 
-## Project files
+1. The backend extracts text from each uploaded PDF page with PyMuPDF and splits it into overlapping chunks.
+2. Sentence Transformers creates normalized embeddings for the chunks, which are saved in a local ChromaDB collection.
+3. For each question, the backend retrieves up to five relevant chunks and sends them with the question to the local Ollama model.
+4. The response includes source information so you can check which document pages support the answer.
 
-- `ingest.py` — extracts, chunks, embeds, and indexes PDFs.
-- `gui.py` — Tkinter desktop app: pick a PDF and chat about it.
-- `query.py` — retrieves relevant chunks and generates answers with Ollama.
-- `documents/` — input PDFs.
-- `chroma_db/` — locally persisted Chroma vector database.
-- `requirements.txt` — Python package dependencies.
+The web app stores its uploaded files, document registry, and ChromaDB data under `version1_web_Brownser/backend/data/`.
 
-The embedding model and vector database run locally. Ollama must be running on the machine when asking questions.
+## Repository layout
+
+```text
+version1_web_Brownser/
+  backend/
+    app/main.py       FastAPI API and PDF indexing/chat logic
+    data/             Local uploads, document registry, and vector database
+    requirements.txt  Backend Python dependencies
+  frontend/
+    src/              React application
+    package.json      Frontend dependencies and scripts
+  demo.png            Screenshot used above
+
+version2_GUI/
+  gui.py              Tkinter desktop prototype
+  ingest.py           Command-line PDF indexing prototype
+  query.py            Command-line question-answering prototype
+```

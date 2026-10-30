@@ -1,0 +1,7 @@
+pymupdf
+chromadb
+sentence-transformers
+ollama
+fastapi
+uvicorn[standard]
+python-multipart
